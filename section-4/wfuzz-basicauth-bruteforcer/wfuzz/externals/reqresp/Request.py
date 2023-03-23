@@ -76,13 +76,13 @@ class Request:
 	    self.__finalurl = fu
 
 	def __str__(self):
-		str="[ URL: %s" % (self.completeUrl)
-		if self.method=="POST":
-			str+=" - POST: \"%s\"" % self.postdata
-		if "Cookie" in self._headers:
-			str+=" - COOKIE: \"%s\"" % self._headers["Cookie"]
-		str+=" ]"
-		return str
+	    str = f"[ URL: {self.completeUrl}"
+	    if self.method=="POST":
+	    	str+=" - POST: \"%s\"" % self.postdata
+	    if "Cookie" in self._headers:
+	    	str+=" - COOKIE: \"%s\"" % self._headers["Cookie"]
+	    str+=" ]"
+	    return str
 
 	def getHost(self):
 		return self.__host
@@ -104,41 +104,39 @@ class Request:
 
 		return r
 	
-	def __getattr__ (self,name):
-		if name=="urlWithoutVariables":
-			return urlunparse((self.schema,self.__host,self.__path,'','',''))
-		elif name=="pathWithVariables":
-			return urlunparse(('','',self.__path,'',self.__variablesGET.urlEncoded(),''))
-		elif name=="completeUrl":
-			return urlunparse((self.schema,self.__host,self.__path,self.__params,self.__variablesGET.urlEncoded(),''))
-		elif name=="finalUrl":
-			if self.__finalurl:
-			    return self.__finalurl
-			return self.completeUrl
-		elif name=="urlWithoutPath":
-			return "%s://%s" % (self.schema,self._headers["Host"])
-		elif name=="path":
-			return self.__path
-		elif name=="postdata":
-			if self.ContentType=="application/x-www-form-urlencoded":
-				return self.__variablesPOST.urlEncoded()
-			elif self.ContentType=="multipart/form-data":
-				return self.__variablesPOST.multipartEncoded()
-			else:
-				return self.__uknPostData
-		else:
-			raise AttributeError
+	def __getattr__(self,name):
+	    if name=="urlWithoutVariables":
+	        return urlunparse((self.schema,self.__host,self.__path,'','',''))
+	    elif name=="pathWithVariables":
+	    	return urlunparse(('','',self.__path,'',self.__variablesGET.urlEncoded(),''))
+	    elif name=="completeUrl":
+	    	return urlunparse((self.schema,self.__host,self.__path,self.__params,self.__variablesGET.urlEncoded(),''))
+	    elif name=="finalUrl":
+	        return self.__finalurl or self.completeUrl
+	    elif name=="urlWithoutPath":
+	        return f'{self.schema}://{self._headers["Host"]}'
+	    elif name=="path":
+	    	return self.__path
+	    elif name=="postdata":
+	    	if self.ContentType=="application/x-www-form-urlencoded":
+	    		return self.__variablesPOST.urlEncoded()
+	    	elif self.ContentType=="multipart/form-data":
+	    		return self.__variablesPOST.multipartEncoded()
+	    	else:
+	    		return self.__uknPostData
+	    else:
+	        raise AttributeError
 
-	def setUrl (self, urltmp):
-		if not (urltmp.startswith("http://") or urltmp.startswith("https://")):
-		    urltmp = "http://" + urltmp
+	def setUrl(self, urltmp):
+	    if not (urltmp.startswith("http://") or urltmp.startswith("https://")):
+	        urltmp = f"http://{urltmp}"
 
-		self.__variablesGET=VariablesSet()
-		self.schema,self.__host,self.__path,self.__params,variables,f=urlparse(urltmp)
-		self._headers["Host"]=self.__host
+	    self.__variablesGET=VariablesSet()
+	    self.schema,self.__host,self.__path,self.__params,variables,f=urlparse(urltmp)
+	    self._headers["Host"]=self.__host
 
-		if variables:
-			self.__variablesGET.parseUrlEncoded(variables)
+	    if variables:
+	    	self.__variablesGET.parseUrlEncoded(variables)
 			
 ############### PROXY ##################################
 	def getProxy (self):
@@ -220,18 +218,12 @@ class Request:
 	    if self._headers.has_key(k):
 		del self._headers[k]
 
-	def __getitem__ (self,key):
-		k=string.capwords(key,"-")
-		if k in self._headers:
-			return self._headers[k]
-		else:
-			return ""
+	def __getitem__(self,key):
+	    k=string.capwords(key,"-")
+	    return self._headers[k] if k in self._headers else ""
 
 	def getHeaders(self):
-		list=[]
-		for i,j in self._headers.items():
-			list+=["%s: %s" % (i,j)]
-		return list
+	    return [f"{i}: {j}" for i, j in self._headers.items()]
 
 	def head(self):
 		conn=pycurl.Curl()
@@ -249,15 +241,15 @@ class Request:
 		self.response=rp
 
 	def createPath(self,newpath):
-		'''Creates new url from a location header || Hecho para el followLocation=true'''
-		if "http" in newpath[:4].lower():
-			return newpath
+	    '''Creates new url from a location header || Hecho para el followLocation=true'''
+	    if "http" in newpath[:4].lower():
+	    	return newpath
 
-		parts=urlparse(self.completeUrl)
-		if "/" != newpath[0]:
-			newpath="/".join(parts[2].split("/")[:-1])+"/"+newpath
+	    parts=urlparse(self.completeUrl)
+	    if newpath[0] != "/":
+	        newpath="/".join(parts[2].split("/")[:-1])+"/"+newpath
 
-		return urlunparse([parts[0],parts[1],newpath,'','',''])
+	    return urlunparse([parts[0],parts[1],newpath,'','',''])
 
 	# pycurl - reqresp conversions
 	@staticmethod
@@ -352,14 +344,17 @@ class Request:
 
 	######### ESTE conjunto de funciones no es necesario para el uso habitual de la clase
 
-	def getAll (self):
-		pd=self.postdata
-		string=str(self.method)+" "+str(self.pathWithVariables)+" "+str(self.protocol)+"\n"
-		for i,j in self._headers.items():
-			string+=i+": "+j+"\n"
-		string+="\n"+pd
+	def getAll(self):
+	    pd=self.postdata
+	    string = (
+	        f"{str(self.method)} {str(self.pathWithVariables)} {str(self.protocol)}"
+	        + "\n"
+	    )
+	    for i,j in self._headers.items():
+	        string += f"{i}: {j}" + "\n"
+	    string+="\n"+pd
 
-		return string
+	    return string
 
 	##########################################################################
 

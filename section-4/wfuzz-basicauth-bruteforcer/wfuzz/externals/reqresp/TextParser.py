@@ -112,18 +112,14 @@ class TextParser:
 
 		return self.matches[key]
 
-	def skip (self,lines):
+	def skip(self,lines):
 		"Salta las lines que se indiquen en el parametro"
-	
-		for i in range(lines):
-			if (self.readLine() == 0):
-				return False
 
-		return True
+		return all(self.readLine() != 0 for _ in range(lines))
 
 	def readLine(self):
 		"Lee la siguiente linea eliminando retornos de carro"
-	
+
 		if self.type=="file":
 			self.lastFull_line=self.fd.readline()
 		elif self.type=="stdin":
@@ -135,22 +131,22 @@ class TextParser:
 			if self.oldindex>=0:
 				self.newindex=self.string.find("\n",self.oldindex,len(self.string))
 				if self.newindex==-1:
-					self.lastFull_line=self.string[self.oldindex:len(self.string)]
+					self.lastFull_line = self.string[self.oldindex:]
 				else:
 					self.lastFull_line=self.string[self.oldindex:self.newindex+1]
-	
+
 				self.oldindex=self.newindex+1
 			else:
 				self.lastFull_line=''
-			
+
 		bytes_read = len(self.lastFull_line)
-		
+
 		s=self.lastFull_line
 		self.lastline=s
-			
+
 		if s[-2:] == '\r\n':
 			self.lastline = s[:-2]
-		elif s[-1:] == '\r' or s[-1:] == '\n':
+		elif s[-1:] in ['\r', '\n']:
 			self.lastline = s[:-1]
 
 		return bytes_read	

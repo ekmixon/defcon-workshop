@@ -85,8 +85,8 @@ class BRegistrant(IRegistrant):
 	    else:
 		return self.plg_filter.is_visible(plg, category)
 
-	def plugin_sort(x, y):
-	    return x[1].priority - y[1].priority
+	def plugin_sort(self, y):
+	    return self[1].priority - y[1].priority
 	    
 	l = filter(plugin_filter, self.__plugins.items())
 

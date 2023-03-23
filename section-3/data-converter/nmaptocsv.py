@@ -58,7 +58,7 @@ p_mac_elementary = '[0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F]'
 p_ip_nmap5 = 'Interesting.*on\s(?:(?P<fqdn_nmap5>.*) (?=\((?P<ip_nmap5>%s)\)))|Interesting.*on\s(?P<ip_only_nmap5>.*)\:' % p_ip_elementary
 p_ip_nmap6 = 'Nmap.*for\s(?:(?P<fqdn_nmap6>.*) (?=\((?P<ip_nmap6>%s)\)))|Nmap.*for\s(?P<ip_only_nmap6>%s)$' % (p_ip_elementary, p_ip_elementary)
 
-p_ip = re.compile('%s|%s' % (p_ip_nmap5, p_ip_nmap6))
+p_ip = re.compile(f'{p_ip_nmap5}|{p_ip_nmap6}')
 
 #-- Port finding
 p_port = re.compile('^(?P<number>[\d]+)\/(?P<protocol>tcp|udp)\s+(?:open|open\|filtered)\s+(?P<service>[\w\S]*)(?:\s*(?P<version>.*))?$')
@@ -153,36 +153,28 @@ class Host:
 		if not(self.get_port_list()):
 			return ['']
 		else:
-			result = []
-			for port in self.get_port_list():
-				result.append(port.get_number())
+			result = [port.get_number() for port in self.get_port_list()]
 		return result
 
 	def get_port_protocol_list(self):
 		if not(self.get_port_list()):
 			return ['']
 		else:
-			result = []
-			for port in self.get_port_list():
-				result.append(port.get_protocol())
+			result = [port.get_protocol() for port in self.get_port_list()]
 		return result
 
 	def get_port_service_list(self):
 		if not(self.get_port_list()):
 			return ['']
 		else:
-			result = []
-			for port in self.get_port_list():
-				result.append(port.get_service())
+			result = [port.get_service() for port in self.get_port_list()]
 		return result
 
 	def get_port_version_list(self):
 		if not(self.get_port_list()):
 			return ['']
 		else:
-			result = []
-			for port in self.get_port_list():
-				result.append(port.get_version())
+			result = [port.get_version() for port in self.get_port_list()]
 		return result
 
 	def get_os(self):
@@ -230,7 +222,7 @@ class Port:
 	def get_version(self):
 		return self.version
 
-def split_grepable_match(raw_string) :
+def split_grepable_match(raw_string):
 	"""
 		Split the raw line to a neat Host object
 
@@ -262,12 +254,12 @@ def split_grepable_match(raw_string) :
 	# Keep only open ports
 	open_ports_list = filter(lambda p: '/open/' in p, all_ports)
 
-	for open_port in open_ports_list :
+	for open_port in open_ports_list:
 		splitted_fields = open_port.split('/',6)
 
 		# Extract each field from the format [port number / state / protocol / owner / service / rpc info / version info]
 		#-- Thanks to http://www.unspecific.com/nmap-oG-output/
-		number, state, protocol, owner, service, version = splitted_fields[0:6]
+		number, state, protocol, owner, service, version = splitted_fields[:6]
 
 		new_port = Port(number, protocol, service, version)
 
@@ -276,7 +268,7 @@ def split_grepable_match(raw_string) :
 
 	return current_host
 
-def parse(fd) :
+def parse(fd):
 	"""
 		Parse the data according to several regexes
 
@@ -292,10 +284,7 @@ def parse(fd) :
 	lines = [l.rstrip() for l in fd.readlines()]
 	for line in lines:
 
-		# 1st case: 	Nmap Normal Output
-		#-- 1st action: Grab the IP
-		IP = p_ip.search(line)
-		if IP:
+		if IP := p_ip.search(line):
 			# Check out what patterns matched
 			IP_potential_match = [IP.group('ip_nmap5'), IP.group('ip_only_nmap5'), IP.group('ip_nmap6'), IP.group('ip_only_nmap6')]
 			IP_str = unique_match_from_list(IP_potential_match)
@@ -324,31 +313,19 @@ def parse(fd) :
 			last_host.add_port(new_port)
 
 
-		# 1st case: 	Nmap Normal Output
-		#-- 3rd action:	Grab the MAC address
-		mac = p_mac.search(line)
-		if mac:
+		if mac := p_mac.search(line):
 			last_host.set_mac(str(mac.group('mac_addr')), str(mac.group('mac_vendor')))
 
 
-		# 1st case:		Nmap Normal Output
-		#-- 4th action:	Grab the OS detection
-		os = p_os.search(line)
-		if os:
+		if os := p_os.search(line):
 			last_host.set_os(str(os.group('os')))
 
 
-		# 1st case:		Nmap Normal Output
-		#-- 5th action:	Grab the network distance
-		network_distance = p_network_dist.search(line)
-		if network_distance:
+		if network_distance := p_network_dist.search(line):
 			last_host.set_network_distance(str(network_distance.group('hop_number')))
 
 
-		# 2nd case: 		Nmap Grepable Output
-		#-- 1 sole action:	Grab the whole line for further splitting
-		grepable = p_grepable.search(line)
-		if grepable :
+		if grepable := p_grepable.search(line):
 			if grepable.group('whole_line') :
 				new_host = split_grepable_match(grepable.group('whole_line'))
 
@@ -371,10 +348,10 @@ def check_supplied_format(fmt):
 
 	splitted_fmt = fmt.split('-')
 
-	for fmt_object in splitted_fmt :
-		if not(fmt_object in SUPPORTED_FORMAT_OBJECTS):
+	for fmt_object in splitted_fmt:
+		if fmt_object not in SUPPORTED_FORMAT_OBJECTS:
 			break
-	else :
+	else:
 		result = VALID_FORMAT
 
 	return result
@@ -388,7 +365,7 @@ def formatted_item(host, format_item):
 
 		@rtype : the <list> attribute value
 	"""
-	if isinstance(host, Host) :
+	if isinstance(host, Host):
 		option_map = {
 					'fqdn' : 				[host.get_fqdn()],
 					'hop_number': 			[host.get_network_distance()],
@@ -402,11 +379,8 @@ def formatted_item(host, format_item):
 					'version':				host.get_port_version_list()
 					 }
 
-		if format_item in option_map.keys():
-			return option_map[format_item]
-		else :
-			return ''
-	else :
+		return option_map.get(format_item, '')
+	else:
 		return []
 
 def repeat_attributes(attribute_list):
@@ -464,23 +438,18 @@ def main(options, arguments):
 			 Supported objects are { fqdn, ip, mac_address, mac_vendor, port, protocol, os, service, version }.")
 
 	# Input descriptor
-	if (options.input != None) :
-		fd_input = open(options.input, 'rb')
-	else :
-		# No input file specified, reading from stdin
-		fd_input = sys.stdin
-
+	fd_input = open(options.input, 'rb') if (options.input != None) else sys.stdin
 	# Analysis
 	results = parse(fd_input)
 	fd_input.close()
 
 	# Output descriptor
-	if (options.output != None) :
-		fd_output = open(options.output, 'wb')
-	else :
+	if options.output is None:
 		# No output file specified, writing to stdout
 		fd_output = sys.stdout
 
+	else:
+		fd_output = open(options.output, 'wb')
 	# Newline
 	newline = {True : YES_NEWLINE, False : NO_NEWLINE}[options.newline != None]
 

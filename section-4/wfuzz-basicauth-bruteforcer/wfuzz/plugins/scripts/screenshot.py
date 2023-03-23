@@ -20,7 +20,13 @@ class screenshot(BasePlugin):
         temp_name = next(tempfile._get_candidate_names())
         defult_tmp_dir = tempfile._get_default_tempdir()
 
-        filename = os.path.join(defult_tmp_dir, temp_name + ".png")
+        filename = os.path.join(defult_tmp_dir, f"{temp_name}.png")
 
-	subprocess.call(['cutycapt', '--url=%s' % pipes.quote(fuzzresult.url), '--out=%s' % filename])
-	self.add_result("Screnshot taken, output at %s" % filename)
+        subprocess.call(
+            [
+                'cutycapt',
+                f'--url={pipes.quote(fuzzresult.url)}',
+                f'--out={filename}',
+            ]
+        )
+        self.add_result(f"Screnshot taken, output at {filename}")

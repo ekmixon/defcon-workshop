@@ -22,12 +22,12 @@ class Singleton(type):
 	#    print s
 	#    return None
 
-    def deleteInstance(class_):
+    def deleteInstance(self):
         ''' Delete the (only) instance. This method is mainly for unittests so
             they can start with a clean slate. '''
-        if class_.hasInstance():
-            del class_.instance
+        if self.hasInstance():
+            del self.instance
 
-    def hasInstance(class_):
+    def hasInstance(self):
         ''' Has the (only) instance been created already? '''
-        return hasattr(class_, 'instance')
+        return hasattr(self, 'instance')
