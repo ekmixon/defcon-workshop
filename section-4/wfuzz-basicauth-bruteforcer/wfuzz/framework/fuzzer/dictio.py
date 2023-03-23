@@ -61,9 +61,8 @@ class requestGenerator:
 	    return self
 
 	def __allvars_gen(self, dic):
-	    for payload in dic:
-		for r in FuzzRequest.from_all_fuzz_request(self.seed, payload):
-		    yield r
+		for payload in dic:
+			yield from FuzzRequest.from_all_fuzz_request(self.seed, payload)
 
 	def next(self):
 	    if self.stats.cancelled:

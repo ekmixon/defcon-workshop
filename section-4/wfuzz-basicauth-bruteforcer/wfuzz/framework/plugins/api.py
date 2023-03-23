@@ -11,9 +11,7 @@ import json
 # Util methods when processing fuzz results 
 
 def url_filename(fuzzresult):
-    u = urlparse.urlsplit(fuzzresult.url).path.split('/')[-1:][0]
-
-    return u
+    return urlparse.urlsplit(fuzzresult.url).path.split('/')[-1:][0]
 
 def url_same_domain(url1, url2):
     return url_domain(url1) == url_domain(url2)
@@ -23,9 +21,7 @@ def url_domain(url):
 
 def url_filename_ext(url):
     path = urlparse.urlparse(url).path
-    ext = os.path.splitext(path)[1]
-
-    return ext
+    return os.path.splitext(path)[1]
 
 # Util methods for accessing search results
 def search_bing(dork, key = None, raw = False):

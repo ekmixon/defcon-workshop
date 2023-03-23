@@ -18,7 +18,7 @@ class Variable:
 		self.value+=val
 
 	def __str__(self):
-		return "[ %s : %s ]" % (self.name,self.value)
+		return f"[ {self.name} : {self.value} ]"
 
 class VariablesSet:
 	def __init__(self):
@@ -26,11 +26,7 @@ class VariablesSet:
 		self.boundary=None
 
 	def names(self):
-		dicc=[]
-		for i in self.variables:
-			dicc.append(i.name)
-
-		return dicc
+		return [i.name for i in self.variables]
 
 	def existsVar(self,name):
 		return name in self.names()
@@ -40,11 +36,7 @@ class VariablesSet:
 
 
 	def getVariable(self,name):
-		dicc=[]
-		for i in self.variables:
-			if i.name==name:
-				dicc.append(i)
-
+		dicc = [i for i in self.variables if i.name==name]
 		if len(dicc)>1:
 			raise Exception, "Variable exists more than one time!!! :D" % (name)
 
@@ -78,9 +70,9 @@ class VariablesSet:
 		pd=""
 		pos=0
 		for i in self.variables:
-			pd+="--"+self.boundary+"\r\n"
+			pd += f"--{self.boundary}" + "\r\n"
 			pd+="%s\r\n\r\n%s\r\n" % ("\r\n".join(i.extraInfo),i.value)
-		pd+="--"+self.boundary+"--\r\n"
+		pd += f"--{self.boundary}" + "--\r\n"
 		return pd
 
 	def parseMultipart(self,cad,boundary):
@@ -89,12 +81,9 @@ class VariablesSet:
 		tp=TextParser()
 		tp.setSource("string",cad)
 
-		while True:
-			headers=[]
-			if not tp.readUntil("name=\"([^\"]+)\""):
-				break
+		while tp.readUntil("name=\"([^\"]+)\""):
 			var=tp[0][0]
-			headers.append(tp.lastFull_line.strip())
+			headers = [tp.lastFull_line.strip()]
 			while True:
 				tp.readLine()
 				if tp.search("^([^:]+): (.*)$"):
